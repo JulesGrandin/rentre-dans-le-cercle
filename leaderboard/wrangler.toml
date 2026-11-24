@@ -1,0 +1,9 @@
+name = "rentre-dans-le-cercle"
+main = "src/index.js"
+compatibility_date = "2026-11-12"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rentre-dans-le-cercle-scores"
+database_id = "e6608e6f-55b3-4567-b84a-4a53866d2937"

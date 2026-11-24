@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <meta name="description" content="Trouvez trois villes dans chaque cercle. 300 km, puis 200 km, puis 100 km, autour du même point.">
+  <title>Rentre dans le cercle</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css?v=16">
+</head>
+<body>
+  <div id="load-overlay" role="status" aria-live="polite" aria-busy="true" aria-label="Chargement">
+    <div class="load-card">
+      <p class="load-text" id="load-text">Ça carto-charge…</p>
+      <div class="load-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="load-bar-fill" class="load-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <div id="review-bar" hidden>
+    <button type="button" id="btn-back" class="btn-primary">Retour au score</button>
+  </div>
+
+  <div id="intro-modal" class="intro-modal" hidden role="dialog" aria-modal="true" aria-labelledby="intro-title">
+    <div class="intro-card">
+      <h1 id="intro-title">Rentre dans le cercle</h1>
+      <p class="lead">Trouvez trois villes dans chaque cercle</p>
+      <ol class="rules">
+        <li>Lancez le point pour définir le centre du cercle</li>
+        <li>Trouvez trois villes dans chaque cercle</li>
+        <li>Le premier cercle fait 300 km de rayon, le deuxième fait 200 km et le dernier fait 100 km</li>
+        <li>Le score le plus rapide gagne</li>
+      </ol>
+      <button type="button" id="btn-start" class="btn-primary">Je me lance</button>
+    </div>
+  </div>
+
+  <div id="timer-block" class="timer-block" hidden aria-label="Temps restant">
+    <div class="timer-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+      <div id="timer-fill" class="timer-fill">
+        <span class="timer-value" id="timer-value">30 s</span>
+      </div>
+    </div>
+  </div>
+
+  <header id="chrome" hidden>
+    <p class="round-meta" id="round-kicker">Manche 1 / 3</p>
+    <p class="round-prompt" id="score-line">Score 0.00 secondes</p>
+  </header>
+
+  <aside id="history-wrap" class="score-history-wrap" hidden aria-label="Votre partie">
+    <p class="score-history-heading">Votre partie</p>
+    <ul id="history" class="score-history"></ul>
+  </aside>
+
+  <div id="dock" hidden>
+    <div class="dock-card">
+      <div id="ask">
+        <p class="round-prompt" id="ask-label">Encore 3 villes</p>
+        <form id="guess-form">
+          <div class="guess-row">
+            <div class="guess-wrap" id="guess-wrap">
+              <label class="sr-only" for="guess">Une commune</label>
+              <input id="guess" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Une commune…">
+              <ul id="suggest" role="listbox" hidden></ul>
+            </div>
+            <button type="submit" id="btn-validate" class="btn-primary">Valider</button>
+          </div>
+          <p class="guess-hint" id="guess-hint" aria-live="polite"></p>
+        </form>
+      </div>
+      <div id="feedback" hidden>
+        <p class="feedback-kicker" id="feedback-kicker">Bravo !</p>
+        <p class="result-detail" id="feedback-detail"></p>
+        <button type="button" id="btn-next" class="btn-primary btn-block">Manche suivante</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="finish-modal" class="intro-modal" hidden role="dialog" aria-modal="true" aria-labelledby="finish-title">
+    <div class="intro-card finish-card">
+      <h1 id="finish-title">Partie terminée</h1>
+      <p class="final-score-kicker">Score</p>
+      <p class="final-score" id="final-score">—</p>
+      <ul class="finish-recap" id="finish-recap" aria-label="Bilan des manches"></ul>
+      <section class="board" aria-label="Classement">
+        <p class="final-score-kicker">Classement</p>
+        <form class="board-form" id="board-form">
+          <input id="board-name" name="pseudo" maxlength="20" autocomplete="nickname" placeholder="Votre pseudo" aria-label="Votre pseudo">
+          <button type="submit" class="btn-primary" id="board-save">Enregistrer</button>
+        </form>
+        <p class="board-note" id="board-note"></p>
+        <ol class="board-list" id="board-list"></ol>
+      </section>
+      <button type="button" id="btn-map" class="btn-secondary">Voir ma carte</button>
+      <button type="button" id="btn-replay" class="btn-primary">Rejouer</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/polygon-clipping@0.15.7/dist/polygon-clipping.umd.js"></script>
+  <script src="app.js?v=28"></script>
+</body>
+</html>

@@ -107,6 +107,8 @@ let fullHeight = window.innerHeight;
 let fitFrame = 0;
 let framedSize = "";
 let keepKeyboard = false;
+let suggestTouch = null;
+let suggestLock = false;
 
 function isPhone() {
   return window.matchMedia("(pointer: coarse) and (max-width: 820px), (pointer: coarse) and (max-height: 520px)").matches;
@@ -1144,6 +1146,19 @@ function showSuggestions(items) {
   ui.suggest.hidden = false;
 }
 
+function pickSuggestion(li) {
+  if (!li || suggestLock) return;
+  const place = suggestItems[Number(li.dataset.i)];
+  if (!place) return;
+  suggestLock = true;
+  window.setTimeout(() => { suggestLock = false; }, 400);
+  suggestIndex = Number(li.dataset.i);
+  ignoreSubmit = true;
+  window.setTimeout(() => { ignoreSubmit = false; }, 400);
+  ui.guess.value = place.name;
+  submitQuery(place);
+}
+
 function moveSuggestion(delta) {
   if (!suggestItems.length) return;
   suggestIndex = (suggestIndex + delta + suggestItems.length) % suggestItems.length;
@@ -1244,7 +1259,8 @@ function acceptPlace(place) {
     round.misses += 1;
     setHint("", "Hors du cercle");
   }
-  ui.guess.focus();
+  if (keepKeyboard) focusGuess();
+  else ui.guess.focus();
 }
 
 function submitQuery(picked) {
@@ -1676,14 +1692,11 @@ function bindPlay() {
     if (ui.hint.textContent) setHint("", "");
     showSuggestions(suggestionsFor(ui.guess.value));
   });
-  ui.guess.addEventListener("blur", () => {
+  ui.guess.addEventListener("blur", (event) => {
     if (!keepKeyboard) return;
-    window.setTimeout(() => {
-      if (!keepKeyboard) return;
-      const active = document.activeElement;
-      if (active && active.closest && (active.closest("button") || active.closest("input"))) return;
-      focusGuess();
-    }, 60);
+    const next = event.relatedTarget;
+    if (next && next.closest && (next.closest("button") || next.closest("input, textarea"))) return;
+    focusGuess();
   });
   ui.guess.addEventListener("keydown", (event) => {
     if (event.key === "ArrowDown") {
@@ -1707,16 +1720,40 @@ function bindPlay() {
     });
   });
   ui.suggest.addEventListener("pointerdown", (event) => {
-    const li = event.target.closest("li");
-    if (!li) return;
     event.preventDefault();
-    const place = suggestItems[Number(li.dataset.i)];
-    if (!place) return;
-    suggestIndex = Number(li.dataset.i);
-    ignoreSubmit = true;
-    window.setTimeout(() => { ignoreSubmit = false; }, 400);
-    ui.guess.value = place.name;
-    submitQuery(place);
+    if (keepKeyboard && event.pointerType === "touch") return;
+    pickSuggestion(event.target.closest("li"));
+  });
+  ui.suggest.addEventListener("touchstart", (event) => {
+    if (!keepKeyboard) return;
+    event.preventDefault();
+    const touch = event.changedTouches[0] || event.touches[0];
+    suggestTouch = {
+      y: touch ? touch.clientY : 0,
+      scroll: ui.suggest.scrollTop,
+      moved: false,
+      li: event.target.closest("li"),
+    };
+  }, { passive: false });
+  ui.suggest.addEventListener("touchmove", (event) => {
+    if (!keepKeyboard || !suggestTouch) return;
+    event.preventDefault();
+    const touch = event.touches[0];
+    if (!touch) return;
+    const dy = suggestTouch.y - touch.clientY;
+    if (Math.abs(dy) > 8) suggestTouch.moved = true;
+    ui.suggest.scrollTop = suggestTouch.scroll + dy;
+  }, { passive: false });
+  ui.suggest.addEventListener("touchend", (event) => {
+    if (!keepKeyboard || !suggestTouch) return;
+    event.preventDefault();
+    const state = suggestTouch;
+    suggestTouch = null;
+    if (state.moved) return;
+    pickSuggestion(state.li);
+  }, { passive: false });
+  ui.suggest.addEventListener("touchcancel", () => {
+    suggestTouch = null;
   });
   ui.suggest.addEventListener("click", (event) => {
     event.preventDefault();

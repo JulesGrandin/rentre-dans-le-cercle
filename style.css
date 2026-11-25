@@ -490,6 +490,9 @@ input:focus-visible {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #suggest li .dep {

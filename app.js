@@ -32,6 +32,7 @@ const ui = {
   form: document.getElementById("guess-form"),
   guessWrap: document.getElementById("guess-wrap"),
   guess: document.getElementById("guess"),
+  validate: document.getElementById("btn-validate"),
   suggest: document.getElementById("suggest"),
   hint: document.getElementById("guess-hint"),
   feedback: document.getElementById("feedback"),
@@ -105,6 +106,22 @@ let ignoreSubmit = false;
 let fullHeight = window.innerHeight;
 let fitFrame = 0;
 let framedSize = "";
+let keepKeyboard = false;
+
+function isPhone() {
+  return window.matchMedia("(pointer: coarse) and (max-width: 820px), (pointer: coarse) and (max-height: 520px)").matches;
+}
+
+function focusGuess() {
+  if (!keepKeyboard || ui.guess.disabled) return;
+  if (document.activeElement === ui.guess) return;
+  ui.guess.focus({ preventScroll: true });
+}
+
+function releaseKeyboard() {
+  keepKeyboard = false;
+  if (document.activeElement === ui.guess) ui.guess.blur();
+}
 
 function lambertToMap(x, y) {
   const lng = (x - 700000) / MAP_M_PER_DEG;
@@ -330,19 +347,41 @@ function askDockHeight() {
   return height;
 }
 
+function framePad() {
+  const review = !ui.reviewBar.hidden;
+  if (!isPhone()) return { top: review ? 28 : 86, gap: 28, side: 28 };
+  const safe = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--safe-top")) || 0;
+  return {
+    top: Math.round(safe + (review ? 12 : 36)),
+    gap: 8,
+    side: 10,
+  };
+}
+
 function frameFrance() {
+  if (launching && launch && (launch.dragging || Math.hypot(launch.vx, launch.vy) > 1)) return;
   const box = map.getContainer();
   const review = !ui.reviewBar.hidden;
-  const top = review ? 28 : 86;
-  const bottom = (review ? ui.reviewBar.offsetHeight : askDockHeight()) + 28;
+  const pad = framePad();
+  const top = pad.top;
+  const bottom = (review ? ui.reviewBar.offsetHeight : askDockHeight()) + pad.gap;
   const size = `${box.clientWidth}x${box.clientHeight}:${top}:${bottom}`;
   if (size === framedSize) return;
   framedSize = size;
   map.resize();
   map.fitBounds(FRANCE_BOUNDS, {
-    padding: { top, bottom, left: 28, right: 28 },
+    padding: { top, bottom, left: pad.side, right: pad.side },
     duration: 0,
   });
+  if (launching && launch && !launch.dragging) {
+    ensureFranceMask();
+    const bounds = launchBounds();
+    const origin = nearestInside((bounds.left + bounds.right) / 2, (bounds.top + bounds.bottom) / 2);
+    launch.x = origin.x;
+    launch.y = origin.y;
+    launch.home = origin;
+    placeCenterPixels(launch.x, launch.y);
+  }
   layoutMarks();
 }
 
@@ -1245,10 +1284,13 @@ function closeRound(kind) {
   locked = true;
   paintScore();
   renderHistory();
-  ui.ask.hidden = true;
   ui.feedback.hidden = false;
   ui.feedback.classList.toggle("is-miss", round.timedOut);
-  ui.guess.blur();
+  if (keepKeyboard) ui.askLabel.hidden = true;
+  else {
+    ui.ask.hidden = true;
+    ui.guess.blur();
+  }
   if (round.timedOut) {
     ui.feedbackKicker.textContent = "Temps écoulé";
     const left = NEED - round.found.length;
@@ -1285,6 +1327,7 @@ function beginRound() {
   ui.feedback.hidden = true;
   ui.feedback.classList.remove("is-miss");
   ui.ask.hidden = false;
+  ui.askLabel.hidden = false;
   ui.dock.hidden = false;
   ui.chrome.hidden = false;
   ui.kicker.textContent = `Manche ${rounds.length + 1} / ${ROUNDS} · ${radius / 1000} km`;
@@ -1296,7 +1339,9 @@ function beginRound() {
   paintScore();
   startRoundTimer();
   scheduleFit();
-  ui.guess.focus();
+  keepKeyboard = isPhone();
+  if (keepKeyboard) focusGuess();
+  else ui.guess.focus();
 }
 
 function ordinal(rank) {
@@ -1390,6 +1435,7 @@ async function saveBoard(event) {
 }
 
 function showFinish() {
+  releaseKeyboard();
   stopRoundTimer();
   ui.timerBlock.hidden = true;
   ui.dock.hidden = true;
@@ -1447,9 +1493,21 @@ function startGame() {
   ui.history.innerHTML = "";
   ui.historyWrap.hidden = true;
   startLaunch();
+  if (!isPhone()) return;
+  keepKeyboard = true;
+  ui.ask.hidden = false;
+  ui.askLabel.hidden = true;
+  ui.feedback.hidden = true;
+  ui.dock.hidden = false;
+  ui.guess.value = "";
+  setHint("", "");
+  framedSize = "";
+  frameFrance();
+  focusGuess();
 }
 
 function backToIntro() {
+  releaseKeyboard();
   stopRoundTimer();
   stopLaunch();
   ui.timerBlock.hidden = true;
@@ -1558,6 +1616,7 @@ function fitPlayfield() {
   const dockH = ui.dock && !ui.dock.hidden ? ui.dock.offsetHeight : 0;
   root.style.setProperty("--dock-h", `${dockH}px`);
   if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+  if (isPhone() && map.loaded()) frameFrance();
 }
 
 function scheduleFit() {
@@ -1568,8 +1627,21 @@ function scheduleFit() {
 function bindPlay() {
   ui.start.addEventListener("click", startGame);
   ui.next.addEventListener("click", () => {
+    if (ui.next.dataset.lock === "1") return;
+    ui.next.dataset.lock = "1";
+    window.setTimeout(() => { ui.next.dataset.lock = "0"; }, 400);
     if (rounds.length >= ROUNDS) showFinish();
     else beginRound();
+  });
+  ui.next.addEventListener("pointerdown", (event) => {
+    if (!keepKeyboard) return;
+    event.preventDefault();
+    ui.next.click();
+  });
+  ui.validate.addEventListener("pointerdown", (event) => {
+    if (!keepKeyboard) return;
+    event.preventDefault();
+    ui.form.requestSubmit();
   });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || event.repeat || event.isComposing) return;
@@ -1590,6 +1662,9 @@ function bindPlay() {
   ui.backScore.addEventListener("click", showScore);
   ui.form.addEventListener("submit", (event) => {
     event.preventDefault();
+    if (ui.form.dataset.lock === "1") return;
+    ui.form.dataset.lock = "1";
+    window.setTimeout(() => { ui.form.dataset.lock = "0"; }, 300);
     if (ignoreSubmit) {
       ignoreSubmit = false;
       return;
@@ -1600,6 +1675,15 @@ function bindPlay() {
   ui.guess.addEventListener("input", () => {
     if (ui.hint.textContent) setHint("", "");
     showSuggestions(suggestionsFor(ui.guess.value));
+  });
+  ui.guess.addEventListener("blur", () => {
+    if (!keepKeyboard) return;
+    window.setTimeout(() => {
+      if (!keepKeyboard) return;
+      const active = document.activeElement;
+      if (active && active.closest && (active.closest("button") || active.closest("input"))) return;
+      focusGuess();
+    }, 60);
   });
   ui.guess.addEventListener("keydown", (event) => {
     if (event.key === "ArrowDown") {
@@ -1622,7 +1706,7 @@ function bindPlay() {
       row.classList.toggle("is-active", i === suggestIndex);
     });
   });
-  ui.suggest.addEventListener("mousedown", (event) => {
+  ui.suggest.addEventListener("pointerdown", (event) => {
     const li = event.target.closest("li");
     if (!li) return;
     event.preventDefault();

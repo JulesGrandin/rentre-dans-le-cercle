@@ -12,6 +12,7 @@
   --vv-height: 100dvh;
   --dock-h: 148px;
   --dock-gap: 16px;
+  --safe-top: env(safe-area-inset-top, 0px);
   color-scheme: light;
 }
 
@@ -941,6 +942,156 @@ input:focus-visible {
 
 html.is-keyboard #chrome,
 html.is-keyboard #history-wrap { display: none; }
+
+@media (max-width: 820px) and (pointer: coarse),
+       (max-height: 520px) and (pointer: coarse) {
+  #map {
+    top: var(--vv-top);
+    right: 0;
+    bottom: auto;
+    left: 0;
+    height: var(--vv-height);
+  }
+
+  #timer-block { height: 8px; }
+
+  #chrome {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    top: calc(10px + env(safe-area-inset-top) + var(--vv-top));
+    left: 8px;
+    width: auto;
+    max-width: 54vw;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  html.is-keyboard #chrome,
+  html.is-keyboard #history-wrap { display: flex; }
+
+  #chrome .round-meta,
+  #chrome .round-prompt {
+    margin: 0;
+    overflow: hidden;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow:
+      0 0 2px #fffdf8,
+      0 0 6px #fffdf8,
+      0 1px 0 #fffdf8,
+      0 -1px 0 #fffdf8;
+  }
+
+  .score-history-wrap {
+    top: calc(10px + env(safe-area-inset-top) + var(--vv-top));
+    right: 8px;
+    left: auto;
+    width: auto;
+    max-width: 44vw;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  html.is-keyboard #history-wrap { display: block; }
+
+  .score-history-heading { display: none; }
+
+  .score-history {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 6px;
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .score-history li {
+    display: inline-flex;
+    gap: 4px;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .score-history .names { max-width: 22vw; }
+
+  .score-history-total {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  :root { --dock-gap: 6px; }
+  html.is-keyboard { --dock-gap: 4px; }
+
+  #dock { width: calc(100% - 12px); }
+
+  .dock-card {
+    padding: 7px 8px 6px;
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(28, 25, 21, 0.12);
+  }
+
+  .dock-card .round-prompt {
+    margin: 0 0 4px;
+    font-size: 12px;
+  }
+
+  .guess-row { gap: 6px; }
+
+  #guess {
+    padding: 7px 10px;
+    font-size: 16px;
+  }
+
+  .guess-row .btn-primary {
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+
+  .guess-hint {
+    min-height: 0;
+    margin: 4px 2px 0;
+    font-size: 12px;
+  }
+
+  .guess-hint:empty { display: none; }
+
+  #suggest { max-height: min(112px, 24dvh); }
+
+  #dock:has(#feedback:not([hidden])) #ask .round-prompt { display: none; }
+
+  #dock:has(#feedback:not([hidden])) .feedback-kicker {
+    font-size: 16px;
+    line-height: 1.1;
+  }
+
+  #dock:has(#feedback:not([hidden])) .result-detail {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  #dock:has(#feedback:not([hidden])) .btn-block {
+    margin-top: 6px;
+    padding: 7px 10px;
+  }
+
+  .center-hint {
+    width: min(220px, 72vw);
+    font-size: 13px;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .guess-wrap.is-shake,

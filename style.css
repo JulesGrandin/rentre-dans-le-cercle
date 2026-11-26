@@ -406,14 +406,14 @@ input:focus-visible {
 }
 
 .dock-card {
-  padding: 14px 14px 12px;
+  padding: 10px 12px 8px;
   border: 1px solid rgba(28, 25, 21, 0.1);
   border-radius: 14px;
   background: var(--paper);
   box-shadow: 0 16px 48px rgba(28, 25, 21, 0.14);
 }
 
-.dock-card .round-prompt { margin: 0 0 8px; }
+.dock-card .round-prompt { margin: 0 0 6px; }
 
 .guess-row {
   display: flex;
@@ -454,11 +454,14 @@ input:focus-visible {
 }
 
 .guess-hint {
-  min-height: 1.2em;
-  margin: 8px 2px 0;
+  height: 1.35em;
+  margin: 4px 2px 0;
+  overflow: hidden;
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   font-size: 13px;
   line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   color: var(--red-deep);
 }
 
@@ -1063,9 +1066,12 @@ html.is-keyboard #history-wrap { display: none; }
   }
 
   .guess-hint {
+    height: auto;
     min-height: 0;
     margin: 4px 2px 0;
+    overflow: visible;
     font-size: 12px;
+    white-space: normal;
   }
 
   .guess-hint:empty { display: none; }

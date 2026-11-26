@@ -351,7 +351,7 @@ function askDockHeight() {
 
 function framePad() {
   const review = !ui.reviewBar.hidden;
-  if (!isPhone()) return { top: review ? 28 : 86, gap: 28, side: 28 };
+  if (!isPhone()) return { top: review ? 16 : 48, gap: 16, side: 12 };
   const safe = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--safe-top")) || 0;
   return {
     top: Math.round(safe + (review ? 12 : 36)),
